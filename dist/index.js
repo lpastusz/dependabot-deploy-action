@@ -25290,6 +25290,7 @@ var src_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _argu
 
 const VERSION_TYPES = ['PATCH', 'MINOR', 'MAJOR'];
 const DEPENDABOT_BRANCH_PREFIX = 'dependabot-npm_and_yarn-';
+const EXPECTED_CONCLUSION = 'success';
 const DEPENDABOT_LABEL = 'in-progress';
 const getInputParams = () => {
     const deployDevDependencies = Boolean(Object(core.getInput)('deployDevDependencies'));
@@ -25320,6 +25321,11 @@ const shouldDeployVersion = (versionChangeType, maxDeployVersion) => {
 const run = (payload) => src_awaiter(void 0, void 0, void 0, function* () {
     const input = getInputParams();
     const client = new github.GitHub(input.gitHubToken);
+    const isSuccess = payload.check_suite.conclusion === EXPECTED_CONCLUSION;
+    if (!isSuccess) {
+        console.log('Branch check suite run was not successful, skipping');
+        return;
+    }
     const pullRequest = payload.check_suite.pull_requests.find(e => e.head.ref.startsWith(DEPENDABOT_BRANCH_PREFIX));
     if (!pullRequest) {
         console.log('Branch for dependabot not found, skipping');
