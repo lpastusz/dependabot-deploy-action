@@ -67,7 +67,6 @@ const run = async (payload: WebhookPayloadStatus): Promise<void> => {
   }
 
   const pullRequests = await client.pulls.list({
-    head: `${context.repo.owner}:${branch}`,
     direction: 'desc',
     sort: 'updated',
     state: 'open',

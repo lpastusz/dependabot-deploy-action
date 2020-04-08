@@ -25338,7 +25338,6 @@ const run = (payload) => src_awaiter(void 0, void 0, void 0, function* () {
         return;
     }
     const pullRequests = yield client.pulls.list({
-        head: `${github.context.repo.owner}:${branch}`,
         direction: 'desc',
         sort: 'updated',
         state: 'open',
