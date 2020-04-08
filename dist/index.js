@@ -25290,7 +25290,7 @@ var src_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _argu
 
 const VERSION_TYPES = ['PATCH', 'MINOR', 'MAJOR'];
 const DEPENDABOT_BRANCH_PREFIX = 'dependabot-npm_and_yarn-';
-const DEPENDABOT_LABEL = 'dependencies';
+const DEPENDABOT_LABEL = 'in-progress';
 const getInputParams = () => {
     const deployDevDependencies = Boolean(Object(core.getInput)('deployDevDependencies'));
     const deployDependencies = Boolean(Object(core.getInput)('deployDependencies'));
@@ -25332,18 +25332,20 @@ const run = (payload) => src_awaiter(void 0, void 0, void 0, function* () {
     }
     const labels = payload.pull_request.labels;
     if (!shouldDeployLabel(labels)) {
-        console.log(`Skipping deploy. PRs with Labels ${labels} should not be deployed`);
+        console.log(`Skipping deploy. PRs with Labels "${labels}" should not be deployed`);
         return;
     }
     yield deploy(payload, github.context, client);
 });
 try {
+    console.log('EventName:', github.context.eventName);
+    console.log('Action:', github.context.action);
+    console.log(JSON.stringify(github.context));
     if (github.context.eventName === 'pull_request') {
-        console.log(JSON.stringify(github.context));
         run(github.context.payload);
     }
     else {
-        throw new Error(`Unexpected eventName ${github.context.eventName}`);
+        console.log(`Not running for event ${github.context.eventName} and action ${github.context.action}`);
     }
 }
 catch (error) {

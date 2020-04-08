@@ -7,7 +7,7 @@ import { deploy } from './deploy';
 
 const VERSION_TYPES = ['PATCH', 'MINOR', 'MAJOR'];
 const DEPENDABOT_BRANCH_PREFIX = 'dependabot-npm_and_yarn-';
-const DEPENDABOT_LABEL = 'dependencies'
+const DEPENDABOT_LABEL = 'in-progress'
 
 const getInputParams = (): InputParams => {
   const deployDevDependencies = Boolean(core.getInput('deployDevDependencies'));
@@ -61,7 +61,7 @@ const run = async (payload: WebhookPayloadPullRequest): Promise<void> => {
 
    const labels = payload.pull_request.labels;
    if (!shouldDeployLabel(labels)) {
-     console.log(`Skipping deploy. PRs with Labels ${labels} should not be deployed`);
+     console.log(`Skipping deploy. PRs with Labels "${labels}" should not be deployed`);
      return;
    }
 
@@ -69,12 +69,14 @@ const run = async (payload: WebhookPayloadPullRequest): Promise<void> => {
 }
 
 try {
+  console.log('EventName:', context.eventName);
+  console.log('Action:', context.action);
+  console.log(JSON.stringify(context));
   if (context.eventName === 'pull_request') {
-    console.log(JSON.stringify(context));
     run(context.payload as WebhookPayloadPullRequest);
   }
   else {
-    throw new Error(`Unexpected eventName ${context.eventName}`);
+    console.log(`Not running for event ${context.eventName} and action ${context.action}`)
   }
 } catch (error) {
   core.setFailed(error.message);
