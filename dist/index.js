@@ -16,7 +16,7 @@ module.exports =
 /******/ 			i: moduleId,
 /******/ 			l: false,
 /******/ 			exports: {}
-/******/ 		}; 
+/******/ 		};
 /******/
 /******/ 		// Execute the module function
 /******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
@@ -36,6 +36,8 @@ module.exports =
 /******/ 		// Load entry module and return exports
 /******/ 		return __webpack_require__(325);
 /******/ 	};
+/******/ 	// initialize runtime
+/******/ 	runtime(__webpack_require__);
 /******/
 /******/ 	// run startup
 /******/ 	return startup();
@@ -4165,23 +4167,51 @@ isStream.transform = function (stream) {
 /***/ }),
 
 /***/ 325:
-/***/ (function(__unusedmodule, __unusedexports, __webpack_require__) {
+/***/ (function(__unusedmodule, __webpack_exports__, __webpack_require__) {
 
-const core = __webpack_require__(470);
-const github = __webpack_require__(469);
-const run = () => {
-    const deployDevDependencies = core.getInput('deployDevDependencies');
-    const deployDependencies = core.getInput('deployDependencies');
-    console.log(deployDevDependencies, deployDependencies);
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(470);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(469);
+/* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_actions_github__WEBPACK_IMPORTED_MODULE_1__);
+var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
 };
+
+
+const GitHub = _actions_github__WEBPACK_IMPORTED_MODULE_1__.GitHub;
+const context = _actions_github__WEBPACK_IMPORTED_MODULE_1__.context;
+const run = (payload) => __awaiter(undefined, void 0, void 0, function* () {
+    const deployDevDependencies = Boolean(_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('deployDevDependencies'));
+    const deployDependencies = Boolean(_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('deployDependencies'));
+    const gitHubToken = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('gitHubToken');
+    const gitHub = new GitHub(gitHubToken);
+    const result = yield gitHub.pulls.createReview({
+        event: 'APPROVE',
+        pull_number: payload.pull_request.number,
+        owner: payload.repository.owner.login,
+        repo: payload.repository.name,
+    });
+    console.log(JSON.stringify(result, null, 2));
+    console.log(deployDevDependencies, deployDependencies);
+});
 try {
-    run();
-    // Get the JSON webhook payload for the event that triggered the workflow
-    const payload = JSON.stringify(github.context.payload, undefined, 2);
-    console.log(`The event payload: ${payload}`);
+    console.log(JSON.stringify(context, null, 2));
+    if (context.eventName === 'pull_request') {
+        run(context.payload);
+    }
+    else {
+        throw new Error(`Unexpected eventName ${context.eventName}`);
+    }
 }
 catch (error) {
-    core.setFailed(error.message);
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(error.message);
 }
 
 
@@ -25323,4 +25353,43 @@ function onceStrict (fn) {
 
 /***/ })
 
-/******/ });
+/******/ },
+/******/ function(__webpack_require__) { // webpackRuntimeModules
+/******/ 	"use strict";
+/******/ 
+/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	!function() {
+/******/ 		// define __esModule on exports
+/******/ 		__webpack_require__.r = function(exports) {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 			}
+/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		};
+/******/ 	}();
+/******/ 	
+/******/ 	/* webpack/runtime/compat get default export */
+/******/ 	!function() {
+/******/ 		// getDefaultExport function for compatibility with non-harmony modules
+/******/ 		__webpack_require__.n = function(module) {
+/******/ 			var getter = module && module.__esModule ?
+/******/ 				function getDefault() { return module['default']; } :
+/******/ 				function getModuleExports() { return module; };
+/******/ 			__webpack_require__.d(getter, 'a', getter);
+/******/ 			return getter;
+/******/ 		};
+/******/ 	}();
+/******/ 	
+/******/ 	/* webpack/runtime/define property getter */
+/******/ 	!function() {
+/******/ 		// define getter function for harmony exports
+/******/ 		var hasOwnProperty = Object.prototype.hasOwnProperty;
+/******/ 		__webpack_require__.d = function(exports, name, getter) {
+/******/ 			if(!hasOwnProperty.call(exports, name)) {
+/******/ 				Object.defineProperty(exports, name, { enumerable: true, get: getter });
+/******/ 			}
+/******/ 		};
+/******/ 	}();
+/******/ 	
+/******/ }
+);
