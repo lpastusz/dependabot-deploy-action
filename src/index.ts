@@ -7,6 +7,7 @@ import { deploy } from './deploy';
 
 const VERSION_TYPES = ['PATCH', 'MINOR', 'MAJOR'];
 const DEPENDABOT_BRANCH_PREFIX = 'dependabot-npm_and_yarn-';
+const EXPECTED_CONCLUSION = 'success';
 const DEPENDABOT_LABEL = 'in-progress'
 
 const getInputParams = (): InputParams => {
@@ -45,6 +46,12 @@ const shouldDeployVersion = (versionChangeType: VersionType, maxDeployVersion: V
 const run = async (payload: WebhookPayloadCheckSuite): Promise<void> => {
   const input = getInputParams();
   const client = new GitHub(input.gitHubToken);
+
+  const isSuccess = payload.check_suite.conclusion === EXPECTED_CONCLUSION;
+  if (!isSuccess) {
+    console.log('Branch check suite run was not successful, skipping');
+    return;
+  }
 
   const pullRequest = payload.check_suite.pull_requests.find(e => e.head.ref.startsWith(DEPENDABOT_BRANCH_PREFIX));
   if (!pullRequest) {
