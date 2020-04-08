@@ -73,7 +73,7 @@ const run = async (payload: WebhookPayloadStatus): Promise<void> => {
     repo: context.repo.repo,
     owner: context.repo.owner,
   })
-  
+
   if (!isSuccessStatusCode(pullRequests.status)) {
     throw new Error('PRs could not be listed');
   }
