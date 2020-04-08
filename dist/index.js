@@ -4198,7 +4198,7 @@ const run = (payload) => __awaiter(undefined, void 0, void 0, function* () {
         owner: context.repo.owner,
         repo: context.repo.repo
     });
-    const result = client.issues.addLabels({
+    const result = yield client.issues.addLabels({
         owner: context.repo.owner,
         repo: context.repo.repo,
         issue_number: payload.pull_request.number,
