@@ -36,9 +36,6 @@ build/Release
 # dotenv environment variables file
 .env
 
-# compiled files
-dist/*
-
 # generated code
 /lib/
 *.js
