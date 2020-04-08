@@ -10,13 +10,20 @@ const run = async (payload: Webhooks.WebhookPayloadPullRequest): Promise<void> =
     const deployDependencies = Boolean(core.getInput('deployDependencies'));
     const gitHubToken = core.getInput('gitHubToken') as string;
 
-    const gitHub = new GitHub(gitHubToken);
+    const client = new GitHub(gitHubToken);
 
-    const result = await gitHub.pulls.createReview({
+    await client.pulls.createReview({
       event: 'APPROVE',
       pull_number: payload.pull_request.number,
       owner: context.repo.owner,
       repo: context.repo.repo
+    })
+
+    const result = client.issues.addLabels({
+      owner: context.repo.owner,
+      repo: context.repo.repo,
+      issue_number: payload.pull_request.number,
+      labels: ['question'],
     })
 
     console.log(JSON.stringify(result, null, 2));
