@@ -23,7 +23,7 @@ Sets if production dependencies will be deployed automatically. Defaults to `fal
 Create an yml file into `.github/workflows/<WORKFLOW_NAME>.yml`
 
 ```yml
-on: [check_suite]
+on: [status]
 
 jobs:
   deploy:

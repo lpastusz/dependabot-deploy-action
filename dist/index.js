@@ -25347,7 +25347,6 @@ const run = (payload) => src_awaiter(void 0, void 0, void 0, function* () {
     if (!isSuccessStatusCode(pullRequests.status)) {
         throw new Error('PRs could not be listed');
     }
-    console.log('pullRequests', JSON.stringify(pullRequests));
     const pullRequest = pullRequests.data.find(e => e.head.sha === branch.commit.sha);
     if (!pullRequest) {
         throw new Error('No PR returned');
@@ -25365,7 +25364,6 @@ const run = (payload) => src_awaiter(void 0, void 0, void 0, function* () {
     yield deploy(pullRequest.number, github.context, client);
 });
 try {
-    console.log(JSON.stringify(github.context));
     if (github.context.eventName === 'status') {
         run(github.context.payload);
     }

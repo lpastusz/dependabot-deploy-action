@@ -78,8 +78,6 @@ const run = async (payload: WebhookPayloadStatus): Promise<void> => {
     throw new Error('PRs could not be listed');
   }
 
-  console.log('pullRequests', JSON.stringify(pullRequests));
-
   const pullRequest = pullRequests.data.find(e => e.head.sha === branch.commit.sha)
 
   if (!pullRequest) {
@@ -103,7 +101,6 @@ const run = async (payload: WebhookPayloadStatus): Promise<void> => {
 }
 
 try {
-  console.log(JSON.stringify(context));
   if (context.eventName === 'status') {
     run(context.payload as WebhookPayloadStatus);
   }
