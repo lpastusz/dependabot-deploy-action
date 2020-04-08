@@ -1,6 +1,13 @@
 name: "Dependabot Deploy"
 description: "Automatically deploys PRs made by dependabot"
 inputs:
+  gitHubToken:
+    description: "Github token for current Action"
+    required: true
+  maxDeployVersion:
+    description: "The maximum difference in version which should be auto-deployed. `PATCH`, `MINOR`, `MAJOR`. Default `MINOR`"
+    required: false
+    default: "MINOR"
   deployDevDependencies:
     description: "If true then dev dependencies will be deployed automatically. Default `true`"
     required: false
@@ -9,9 +16,6 @@ inputs:
     description: "If true then production dependencies will be deployed automatically, Default `false`"
     required: false
     default: false
-  gitHubToken:
-    description: "Github token for current Action"
-    required: true
 runs:
   using: "node12"
   main: "dist/index.js"

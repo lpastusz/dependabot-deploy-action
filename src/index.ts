@@ -1,41 +1,55 @@
 import * as core from '@actions/core'
-import * as github from '@actions/github'
-import * as Webhooks from '@octokit/webhooks'
+import { GitHub, context } from '@actions/github'
+import { WebhookPayloadPullRequest } from '@octokit/webhooks'
+import { VersionType, InputParams } from './types';
+import { getVersionTypeChangeFromTitle } from './getVersionTypeChangeFromTitle';
+import { deploy } from './deploy';
 
-const GitHub = github.GitHub;
-const context = github.context;
+const VERSION_TYPES = ['PATCH', 'MINOR', 'MAJOR'];
 
-const run = async (payload: Webhooks.WebhookPayloadPullRequest): Promise<void> => {
-    const deployDevDependencies = Boolean(core.getInput('deployDevDependencies'));
-    const deployDependencies = Boolean(core.getInput('deployDependencies'));
-    const gitHubToken = core.getInput('gitHubToken') as string;
+const getInputParams = (): InputParams => {
+  const deployDevDependencies = Boolean(core.getInput('deployDevDependencies'));
+  const deployDependencies = Boolean(core.getInput('deployDependencies'));
+  const gitHubToken = core.getInput('gitHubToken') as string;
+  const maxDeployVersion = core.getInput('maxDeployVersion').toUpperCase() as VersionType;
 
-    const client = new GitHub(gitHubToken);
+  if (!VERSION_TYPES.includes(maxDeployVersion)) {
+    throw new Error(`Unexpected input for maxDeployVersion ${maxDeployVersion}`);
+  }
 
-    await client.pulls.createReview({
-      event: 'APPROVE',
-      pull_number: payload.pull_request.number,
-      owner: context.repo.owner,
-      repo: context.repo.repo
-    })
+  return {
+    deployDevDependencies,
+    deployDependencies,
+    gitHubToken,
+    maxDeployVersion,
+  };
+}
 
-    const result = await client.issues.addLabels({
-      owner: context.repo.owner,
-      repo: context.repo.repo,
-      issue_number: payload.pull_request.number,
-      labels: ['question'],
-    })
+const shouldDeployVersion = (versionChangeType: VersionType, maxDeployVersion: VersionType): boolean => {
+  const versionIndex = VERSION_TYPES.indexOf(versionChangeType);
+  const maxVersionIndex = VERSION_TYPES.indexOf(maxDeployVersion);
 
-    console.log(JSON.stringify(result, null, 2));
+  return versionIndex <= maxVersionIndex;
+}
 
-    console.log(deployDevDependencies, deployDependencies)
+const run = async (payload: WebhookPayloadPullRequest): Promise<void> => {
+  const input = getInputParams();
+  const client = new GitHub(input.gitHubToken);
+
+  const versionChangeType = getVersionTypeChangeFromTitle(payload.pull_request.title);
+
+  const shouldDeploy = shouldDeployVersion(versionChangeType, input.maxDeployVersion);
+  if (!shouldDeploy) {
+      console.log(`Skipping deploy for version type ${versionChangeType}. Running with maxDeployVersion ${input.maxDeployVersion}`);
+      return;
+   }
+
+  await deploy(payload, context, client);
 }
 
 try {
-  console.log(JSON.stringify(context, null, 2));
-
   if (context.eventName === 'pull_request') {
-    run(context.payload as Webhooks.WebhookPayloadPullRequest);
+    run(context.payload as WebhookPayloadPullRequest);
   }
   else {
     throw new Error(`Unexpected eventName ${context.eventName}`);

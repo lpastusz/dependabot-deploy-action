@@ -34,7 +34,7 @@ module.exports =
 /******/ 	// the startup function
 /******/ 	function startup() {
 /******/ 		// Load entry module and return exports
-/******/ 		return __webpack_require__(325);
+/******/ 		return __webpack_require__(965);
 /******/ 	};
 /******/ 	// initialize runtime
 /******/ 	runtime(__webpack_require__);
@@ -4162,63 +4162,6 @@ isStream.duplex = function (stream) {
 isStream.transform = function (stream) {
 	return isStream.duplex(stream) && typeof stream._transform === 'function' && typeof stream._transformState === 'object';
 };
-
-
-/***/ }),
-
-/***/ 325:
-/***/ (function(__unusedmodule, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(470);
-/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(469);
-/* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_actions_github__WEBPACK_IMPORTED_MODULE_1__);
-var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-
-
-const GitHub = _actions_github__WEBPACK_IMPORTED_MODULE_1__.GitHub;
-const context = _actions_github__WEBPACK_IMPORTED_MODULE_1__.context;
-const run = (payload) => __awaiter(undefined, void 0, void 0, function* () {
-    const deployDevDependencies = Boolean(_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('deployDevDependencies'));
-    const deployDependencies = Boolean(_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('deployDependencies'));
-    const gitHubToken = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('gitHubToken');
-    const client = new GitHub(gitHubToken);
-    yield client.pulls.createReview({
-        event: 'APPROVE',
-        pull_number: payload.pull_request.number,
-        owner: context.repo.owner,
-        repo: context.repo.repo
-    });
-    const result = yield client.issues.addLabels({
-        owner: context.repo.owner,
-        repo: context.repo.repo,
-        issue_number: payload.pull_request.number,
-        labels: ['question'],
-    });
-    console.log(JSON.stringify(result, null, 2));
-    console.log(deployDevDependencies, deployDependencies);
-});
-try {
-    console.log(JSON.stringify(context, null, 2));
-    if (context.eventName === 'pull_request') {
-        run(context.payload);
-    }
-    else {
-        throw new Error(`Unexpected eventName ${context.eventName}`);
-    }
-}
-catch (error) {
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(error.message);
-}
 
 
 /***/ }),
@@ -25251,6 +25194,146 @@ module.exports.shellSync = (cmd, opts) => handleShell(module.exports.sync, cmd, 
 
 /***/ }),
 
+/***/ 965:
+/***/ (function(__unusedmodule, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+
+// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
+var core = __webpack_require__(470);
+
+// EXTERNAL MODULE: ./node_modules/@actions/github/lib/github.js
+var github = __webpack_require__(469);
+
+// CONCATENATED MODULE: ./src/getVersionTypeChangeFromTitle.ts
+const getVersionTypeChangeFromTitle = (title) => {
+    const VERSIONS_REGEX = /[0-9.]+/g;
+    const versions = title.match(VERSIONS_REGEX);
+    if (versions.length !== 2) {
+        throw new Error(`Expected two versions in PR title "${title}"`);
+    }
+    const [previousVersion, nextVersion] = versions;
+    const parsedPrevious = previousVersion.split('.').map(Number);
+    const parsedNext = previousVersion.split('.').map(Number);
+    if (parsedPrevious.length !== 3) {
+        throw new Error(`Expected previous version to be in format X.X.X. Found "${previousVersion}"`);
+    }
+    if (parsedNext.length !== 3) {
+        throw new Error(`Expected next version to be in format X.X.X. Found "${nextVersion}"`);
+    }
+    if (!(previousVersion[0] >= nextVersion[0] && previousVersion[1] >= nextVersion[1] && previousVersion[2] >= nextVersion[2])) {
+        throw new Error(`Expected previous version to be smaller in PR title "${title}"`);
+    }
+    if (parsedPrevious[0] > parsedNext[0]) {
+        return 'MAJOR';
+    }
+    if (parsedPrevious[1] > parsedNext[1]) {
+        return 'MINOR';
+    }
+    if (parsedPrevious[2] > parsedNext[2]) {
+        return 'PATCH';
+    }
+    throw new Error(`Unexpected case for title ${title}`);
+};
+
+// CONCATENATED MODULE: ./src/utils.ts
+const isSuccessStatusCode = (statusCode) => statusCode >= 200 && statusCode < 300;
+
+// CONCATENATED MODULE: ./src/deploy.ts
+var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+
+const LABEL_NAME = 'question';
+const deploy = (payload, context, client) => __awaiter(undefined, void 0, void 0, function* () {
+    const createReview = client.pulls.createReview({
+        event: 'APPROVE',
+        pull_number: payload.pull_request.number,
+        owner: context.repo.owner,
+        repo: context.repo.repo
+    });
+    const addLabel = client.issues.addLabels({
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        issue_number: payload.pull_request.number,
+        labels: [LABEL_NAME],
+    });
+    const [createReviewResult, addLabelResult] = yield Promise.all([createReview, addLabel]);
+    if (!isSuccessStatusCode(createReviewResult.status)) {
+        throw new Error(`Review could not be created. ${JSON.stringify(createReviewResult)}`);
+    }
+    if (!isSuccessStatusCode(addLabelResult.status)) {
+        throw new Error(`Label could not be added. ${JSON.stringify(addLabel)}`);
+    }
+    console.log('Review created and label added');
+});
+
+// CONCATENATED MODULE: ./src/index.ts
+var src_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+
+
+
+
+const VERSION_TYPES = ['PATCH', 'MINOR', 'MAJOR'];
+const getInputParams = () => {
+    const deployDevDependencies = Boolean(Object(core.getInput)('deployDevDependencies'));
+    const deployDependencies = Boolean(Object(core.getInput)('deployDependencies'));
+    const gitHubToken = Object(core.getInput)('gitHubToken');
+    const maxDeployVersion = Object(core.getInput)('maxDeployVersion').toUpperCase();
+    if (!VERSION_TYPES.includes(maxDeployVersion)) {
+        throw new Error(`Unexpected input for maxDeployVersion ${maxDeployVersion}`);
+    }
+    return {
+        deployDevDependencies,
+        deployDependencies,
+        gitHubToken,
+        maxDeployVersion,
+    };
+};
+const shouldDeployVersion = (versionChangeType, maxDeployVersion) => {
+    const versionIndex = VERSION_TYPES.indexOf(versionChangeType);
+    const maxVersionIndex = VERSION_TYPES.indexOf(maxDeployVersion);
+    return versionIndex <= maxVersionIndex;
+};
+const run = (payload) => src_awaiter(undefined, void 0, void 0, function* () {
+    const input = getInputParams();
+    const client = new github.GitHub(input.gitHubToken);
+    const versionChangeType = getVersionTypeChangeFromTitle(payload.pull_request.title);
+    const shouldDeploy = shouldDeployVersion(versionChangeType, input.maxDeployVersion);
+    if (!shouldDeploy) {
+        console.log(`Skipping deploy for version type ${versionChangeType}. Running with maxDeployVersion ${input.maxDeployVersion}`);
+        return;
+    }
+    yield deploy(payload, github.context, client);
+});
+try {
+    if (github.context.eventName === 'pull_request') {
+        run(github.context.payload);
+    }
+    else {
+        throw new Error(`Unexpected eventName ${github.context.eventName}`);
+    }
+}
+catch (error) {
+    Object(core.setFailed)(error.message);
+}
+
+
+/***/ }),
+
 /***/ 966:
 /***/ (function(module, __unusedexports, __webpack_require__) {
 
@@ -25374,6 +25457,36 @@ function onceStrict (fn) {
 /******/ 		};
 /******/ 	}();
 /******/ 	
+/******/ 	/* webpack/runtime/define property getter */
+/******/ 	!function() {
+/******/ 		// define getter function for harmony exports
+/******/ 		var hasOwnProperty = Object.prototype.hasOwnProperty;
+/******/ 		__webpack_require__.d = function(exports, name, getter) {
+/******/ 			if(!hasOwnProperty.call(exports, name)) {
+/******/ 				Object.defineProperty(exports, name, { enumerable: true, get: getter });
+/******/ 			}
+/******/ 		};
+/******/ 	}();
+/******/ 	
+/******/ 	/* webpack/runtime/create fake namespace object */
+/******/ 	!function() {
+/******/ 		// create a fake namespace object
+/******/ 		// mode & 1: value is a module id, require it
+/******/ 		// mode & 2: merge all properties of value into the ns
+/******/ 		// mode & 4: return value when already ns object
+/******/ 		// mode & 8|1: behave like require
+/******/ 		__webpack_require__.t = function(value, mode) {
+/******/ 			if(mode & 1) value = this(value);
+/******/ 			if(mode & 8) return value;
+/******/ 			if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
+/******/ 			var ns = Object.create(null);
+/******/ 			__webpack_require__.r(ns);
+/******/ 			Object.defineProperty(ns, 'default', { enumerable: true, value: value });
+/******/ 			if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
+/******/ 			return ns;
+/******/ 		};
+/******/ 	}();
+/******/ 	
 /******/ 	/* webpack/runtime/compat get default export */
 /******/ 	!function() {
 /******/ 		// getDefaultExport function for compatibility with non-harmony modules
@@ -25383,17 +25496,6 @@ function onceStrict (fn) {
 /******/ 				function getModuleExports() { return module; };
 /******/ 			__webpack_require__.d(getter, 'a', getter);
 /******/ 			return getter;
-/******/ 		};
-/******/ 	}();
-/******/ 	
-/******/ 	/* webpack/runtime/define property getter */
-/******/ 	!function() {
-/******/ 		// define getter function for harmony exports
-/******/ 		var hasOwnProperty = Object.prototype.hasOwnProperty;
-/******/ 		__webpack_require__.d = function(exports, name, getter) {
-/******/ 			if(!hasOwnProperty.call(exports, name)) {
-/******/ 				Object.defineProperty(exports, name, { enumerable: true, get: getter });
-/******/ 			}
 /******/ 		};
 /******/ 	}();
 /******/ 	
