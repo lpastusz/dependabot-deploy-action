@@ -15,8 +15,8 @@ const run = async (payload: Webhooks.WebhookPayloadPullRequest): Promise<void> =
     const result = await gitHub.pulls.createReview({
       event: 'APPROVE',
       pull_number: payload.pull_request.number,
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
+      owner: context.repo.owner,
+      repo: context.repo.repo
     })
 
     console.log(JSON.stringify(result, null, 2));
