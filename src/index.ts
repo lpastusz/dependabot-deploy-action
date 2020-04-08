@@ -7,6 +7,7 @@ import { deploy } from './deploy';
 
 const VERSION_TYPES = ['PATCH', 'MINOR', 'MAJOR'];
 const DEPENDABOT_BRANCH_PREFIX = 'dependabot-npm_and_yarn-';
+const DEPENDABOT_LABEL = 'dependencies'
 
 const getInputParams = (): InputParams => {
   const deployDevDependencies = Boolean(core.getInput('deployDevDependencies'));
@@ -26,9 +27,13 @@ const getInputParams = (): InputParams => {
   };
 }
 
-// const shouldDeployBranch = (): boolean => {
-//     payload
-// }
+const shouldDeployBranch = (branchName: string): boolean => {
+  return branchName.startsWith(DEPENDABOT_BRANCH_PREFIX);
+}
+
+const shouldDeployLabel = (labels: string[]): boolean => {
+  return labels.includes(DEPENDABOT_LABEL);
+}
 
 const shouldDeployVersion = (versionChangeType: VersionType, maxDeployVersion: VersionType): boolean => {
   const versionIndex = VERSION_TYPES.indexOf(versionChangeType);
@@ -42,12 +47,22 @@ const run = async (payload: WebhookPayloadPullRequest): Promise<void> => {
   const client = new GitHub(input.gitHubToken);
 
   const versionChangeType = getVersionTypeChangeFromTitle(payload.pull_request.title);
-  // payload.
 
-  const shouldDeploy = shouldDeployVersion(versionChangeType, input.maxDeployVersion);
-  if (!shouldDeploy) {
+  if (!shouldDeployVersion(versionChangeType, input.maxDeployVersion)) {
       console.log(`Skipping deploy for version type ${versionChangeType}. Running with maxDeployVersion ${input.maxDeployVersion}`);
       return;
+   }
+
+   const branchName = payload.pull_request.head.ref;
+   if (!shouldDeployBranch(branchName)) {
+     console.log(`Skipping deploy for branch ${branchName}. Branch is not created by dependabot`);
+     return;
+   }
+
+   const labels = payload.pull_request.labels;
+   if (!shouldDeployLabel(labels)) {
+     console.log(`Skipping deploy. PRs with Labels ${labels} should not be deployed`);
+     return;
    }
 
   await deploy(payload, context, client);

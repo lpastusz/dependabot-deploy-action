@@ -25290,6 +25290,7 @@ var src_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _argu
 
 const VERSION_TYPES = ['PATCH', 'MINOR', 'MAJOR'];
 const DEPENDABOT_BRANCH_PREFIX = 'dependabot-npm_and_yarn-';
+const DEPENDABOT_LABEL = 'dependencies';
 const getInputParams = () => {
     const deployDevDependencies = Boolean(Object(core.getInput)('deployDevDependencies'));
     const deployDependencies = Boolean(Object(core.getInput)('deployDependencies'));
@@ -25305,9 +25306,12 @@ const getInputParams = () => {
         maxDeployVersion,
     };
 };
-// const shouldDeployBranch = (): boolean => {
-//     payload
-// }
+const shouldDeployBranch = (branchName) => {
+    return branchName.startsWith(DEPENDABOT_BRANCH_PREFIX);
+};
+const shouldDeployLabel = (labels) => {
+    return labels.includes(DEPENDABOT_LABEL);
+};
 const shouldDeployVersion = (versionChangeType, maxDeployVersion) => {
     const versionIndex = VERSION_TYPES.indexOf(versionChangeType);
     const maxVersionIndex = VERSION_TYPES.indexOf(maxDeployVersion);
@@ -25317,10 +25321,18 @@ const run = (payload) => src_awaiter(void 0, void 0, void 0, function* () {
     const input = getInputParams();
     const client = new github.GitHub(input.gitHubToken);
     const versionChangeType = getVersionTypeChangeFromTitle(payload.pull_request.title);
-    // payload.
-    const shouldDeploy = shouldDeployVersion(versionChangeType, input.maxDeployVersion);
-    if (!shouldDeploy) {
+    if (!shouldDeployVersion(versionChangeType, input.maxDeployVersion)) {
         console.log(`Skipping deploy for version type ${versionChangeType}. Running with maxDeployVersion ${input.maxDeployVersion}`);
+        return;
+    }
+    const branchName = payload.pull_request.head.ref;
+    if (!shouldDeployBranch(branchName)) {
+        console.log(`Skipping deploy for branch ${branchName}. Branch is not created by dependabot`);
+        return;
+    }
+    const labels = payload.pull_request.labels;
+    if (!shouldDeployLabel(labels)) {
+        console.log(`Skipping deploy. PRs with Labels ${labels} should not be deployed`);
         return;
     }
     yield deploy(payload, github.context, client);
