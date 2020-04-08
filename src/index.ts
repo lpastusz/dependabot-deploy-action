@@ -70,7 +70,7 @@ const run = async (payload: WebhookPayloadStatus): Promise<void> => {
     head: `${context.repo.owner}:${branch}`,
     direction: 'desc',
     sort: 'updated',
-    per_page: 1,
+    state: 'open',
     repo: context.repo.repo,
     owner: context.repo.owner,
   })
@@ -79,11 +79,11 @@ const run = async (payload: WebhookPayloadStatus): Promise<void> => {
     throw new Error('PRs could not be listed');
   }
 
-  if (!pullRequests.data.length) {
+  const pullRequest = pullRequests.data.find(e => e.head.sha === branch.commit.sha)
+
+  if (!pullRequest) {
     throw new Error('No PR returned');
   }
-
-  const pullRequest = pullRequests.data[0];
 
   const versionChangeType = getVersionTypeChangeFromTitle(pullRequest.title);
 
