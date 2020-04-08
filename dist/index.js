@@ -25251,17 +25251,17 @@ var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _argume
 };
 
 const LABEL_NAME = 'question';
-const deploy = (payload, context, client) => __awaiter(void 0, void 0, void 0, function* () {
+const deploy = (pullRequestNumber, context, client) => __awaiter(void 0, void 0, void 0, function* () {
     const createReview = client.pulls.createReview({
         event: 'APPROVE',
-        pull_number: payload.pull_request.number,
+        pull_number: pullRequestNumber,
         owner: context.repo.owner,
         repo: context.repo.repo
     });
     const addLabel = client.issues.addLabels({
         owner: context.repo.owner,
         repo: context.repo.repo,
-        issue_number: payload.pull_request.number,
+        issue_number: pullRequestNumber,
         labels: [LABEL_NAME],
     });
     const [createReviewResult, addLabelResult] = yield Promise.all([createReview, addLabel]);
@@ -25320,28 +25320,31 @@ const shouldDeployVersion = (versionChangeType, maxDeployVersion) => {
 const run = (payload) => src_awaiter(void 0, void 0, void 0, function* () {
     const input = getInputParams();
     const client = new github.GitHub(input.gitHubToken);
-    const versionChangeType = getVersionTypeChangeFromTitle(payload.pull_request.title);
+    const pullRequest = payload.check_suite.pull_requests.find(e => e.head.ref.startsWith(DEPENDABOT_BRANCH_PREFIX));
+    if (!pullRequest) {
+        console.log('Branch for dependabot not found, skipping');
+        return;
+    }
+    const pullRequestData = yield client.pulls.get({
+        owner: github.context.repo.owner,
+        pull_number: pullRequest.number,
+        repo: pullRequest.head.repo.name,
+    });
+    const versionChangeType = getVersionTypeChangeFromTitle(pullRequestData.data.title);
     if (!shouldDeployVersion(versionChangeType, input.maxDeployVersion)) {
         console.log(`Skipping deploy for version type ${versionChangeType}. Running with maxDeployVersion ${input.maxDeployVersion}`);
         return;
     }
-    const branchName = payload.pull_request.head.ref;
-    if (!shouldDeployBranch(branchName)) {
-        console.log(`Skipping deploy for branch ${branchName}. Branch is not created by dependabot`);
-        return;
-    }
-    const labels = payload.pull_request.labels;
+    const labels = pullRequestData.data.labels.map(e => e.name);
     if (!shouldDeployLabel(labels)) {
         console.log(`Skipping deploy. PRs with Labels "${labels}" should not be deployed`);
         return;
     }
-    yield deploy(payload, github.context, client);
+    yield deploy(pullRequest.number, github.context, client);
 });
 try {
-    console.log('EventName:', github.context.eventName);
-    console.log('Action:', github.context.action);
     console.log(JSON.stringify(github.context));
-    if (github.context.eventName === 'pull_request') {
+    if (github.context.eventName === 'check_suite') {
         run(github.context.payload);
     }
     else {

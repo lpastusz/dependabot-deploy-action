@@ -1,14 +1,14 @@
-import { WebhookPayloadPullRequest } from "@octokit/webhooks";
+import { WebhookPayloadCheckSuite } from "@octokit/webhooks";
 import { GitHub } from "@actions/github";
 import { Context } from "@actions/github/lib/context";
 import { isSuccessStatusCode } from "./utils";
 
 const LABEL_NAME = 'question';
 
-export const deploy = async (payload: WebhookPayloadPullRequest, context: Context, client: GitHub): Promise<void> => {
+export const deploy = async (pullRequestNumber: number, context: Context, client: GitHub): Promise<void> => {
     const createReview = client.pulls.createReview({
       event: 'APPROVE',
-      pull_number: payload.pull_request.number,
+      pull_number: pullRequestNumber,
       owner: context.repo.owner,
       repo: context.repo.repo
     })
@@ -16,7 +16,7 @@ export const deploy = async (payload: WebhookPayloadPullRequest, context: Contex
     const addLabel = client.issues.addLabels({
       owner: context.repo.owner,
       repo: context.repo.repo,
-      issue_number: payload.pull_request.number,
+      issue_number: pullRequestNumber,
       labels: [LABEL_NAME],
     })
   
