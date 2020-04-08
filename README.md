@@ -2,20 +2,36 @@
 
 ## Inputs
 
-### `gitHubToken`
+#### gitHubToken (required)
 
-**Required** GitHub token for current action.
+GitHub token for current action.
 
-### maxDeployVersion
+#### maxDeployVersion
 
-The maximum difference in version which should be auto-deployed. Allowed values `PATCH`, `MINOR`, `MAJOR`. Default `MINOR`.
+The maximum difference in version which should be auto-deployed. Allowed values `PATCH`, `MINOR`, `MAJOR`. Defaults to `MINOR`.
 
-### `deployDevDependencies`
+#### deployDevDependencies (TODO: So far not working)
 
-TODO: So far ignored
-If true then dev dependencies will be deployed automatically. Default `true`.
+Sets if dev dependencies will be deployed automatically. Defaults to `true`.
 
-### `deployDependencies`
+#### deployDependencies (TODO: So far not working)
 
-TODO: So far ignored
-If true then production dependencies will be deployed automatically. Default `false`.
+Sets if production dependencies will be deployed automatically. Defaults to `false`.
+
+## Usage
+
+Create an yml file into `.github/workflows/<WORKFLOW_NAME>.yml`
+
+```yml
+on: [check_suite]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Dependabot auto deploy dependencies
+    steps:
+      - name: Deploy
+        uses: lpastusz/dependabot-deploy-action@master
+        with:
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+```
