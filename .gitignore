@@ -35,10 +35,3 @@ build/Release
 
 # dotenv environment variables file
 .env
-
-# generated code
-/lib/
-*.js
-*.d.ts
-*.js.map
-*.ts.map
