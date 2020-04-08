@@ -25250,7 +25250,7 @@ var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _argume
     });
 };
 
-const LABEL_NAME = 'in-progress';
+const LABEL_NAME = 'question';
 const deploy = (pullRequestNumber, context, client) => __awaiter(void 0, void 0, void 0, function* () {
     const createReview = client.pulls.createReview({
         event: 'APPROVE',
@@ -25288,9 +25288,11 @@ var src_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _argu
 
 
 
+
 const VERSION_TYPES = ['PATCH', 'MINOR', 'MAJOR'];
 const DEPENDABOT_BRANCH_PREFIX = 'dependabot-npm_and_yarn-';
 const EXPECTED_CONCLUSION = 'success';
+const EXPECTED_CONTEXT = 'continuous-integration/codeship';
 const DEPENDABOT_LABEL = 'dependencies';
 const getInputParams = () => {
     const deployDevDependencies = Boolean(Object(core.getInput)('deployDevDependencies'));
@@ -25321,27 +25323,41 @@ const shouldDeployVersion = (versionChangeType, maxDeployVersion) => {
 const run = (payload) => src_awaiter(void 0, void 0, void 0, function* () {
     const input = getInputParams();
     const client = new github.GitHub(input.gitHubToken);
-    const isSuccess = payload.check_suite.conclusion === EXPECTED_CONCLUSION;
-    if (!isSuccess) {
-        console.log('Branch check suite run was not successful, skipping');
+    if (payload.context !== EXPECTED_CONTEXT) {
+        console.log('Context is not codeship, skipping');
         return;
     }
-    const pullRequest = payload.check_suite.pull_requests.find(e => e.head.ref.startsWith(DEPENDABOT_BRANCH_PREFIX));
-    if (!pullRequest) {
+    const isSuccess = payload.state === EXPECTED_CONCLUSION;
+    if (!isSuccess) {
+        console.log('status is not success, skipping');
+        return;
+    }
+    const branch = payload.branches.find(e => e.name.startsWith(DEPENDABOT_BRANCH_PREFIX));
+    if (!branch) {
         console.log('Branch for dependabot not found, skipping');
         return;
     }
-    const pullRequestData = yield client.pulls.get({
+    const pullRequests = yield client.pulls.list({
+        head: `${github.context.repo.owner}:${branch}`,
+        direction: 'desc',
+        sort: 'updated',
+        per_page: 1,
+        repo: github.context.repo.repo,
         owner: github.context.repo.owner,
-        pull_number: pullRequest.number,
-        repo: pullRequest.head.repo.name,
     });
-    const versionChangeType = getVersionTypeChangeFromTitle(pullRequestData.data.title);
+    if (!isSuccessStatusCode(pullRequests.status)) {
+        throw new Error('PRs could not be listed');
+    }
+    if (!pullRequests.data.length) {
+        throw new Error('No PR returned');
+    }
+    const pullRequest = pullRequests.data[0];
+    const versionChangeType = getVersionTypeChangeFromTitle(pullRequest.title);
     if (!shouldDeployVersion(versionChangeType, input.maxDeployVersion)) {
         console.log(`Skipping deploy for version type ${versionChangeType}. Running with maxDeployVersion ${input.maxDeployVersion}`);
         return;
     }
-    const labels = pullRequestData.data.labels.map(e => e.name);
+    const labels = pullRequest.labels.map(e => e.name);
     if (!shouldDeployLabel(labels)) {
         console.log(`Skipping deploy. PRs with Labels "${labels}" should not be deployed`);
         return;
@@ -25350,7 +25366,7 @@ const run = (payload) => src_awaiter(void 0, void 0, void 0, function* () {
 });
 try {
     console.log(JSON.stringify(github.context));
-    if (github.context.eventName === 'check_suite') {
+    if (github.context.eventName === 'status') {
         run(github.context.payload);
     }
     else {

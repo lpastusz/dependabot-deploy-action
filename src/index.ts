@@ -1,13 +1,15 @@
 import * as core from '@actions/core'
 import { GitHub, context } from '@actions/github'
-import { WebhookPayloadCheckSuite } from '@octokit/webhooks'
+import { WebhookPayloadStatus } from '@octokit/webhooks'
 import { VersionType, InputParams } from './types';
 import { getVersionTypeChangeFromTitle } from './getVersionTypeChangeFromTitle';
 import { deploy } from './deploy';
+import { isSuccessStatusCode } from './utils';
 
 const VERSION_TYPES = ['PATCH', 'MINOR', 'MAJOR'];
 const DEPENDABOT_BRANCH_PREFIX = 'dependabot-npm_and_yarn-';
 const EXPECTED_CONCLUSION = 'success';
+const EXPECTED_CONTEXT = 'continuous-integration/codeship';
 const DEPENDABOT_LABEL = 'dependencies'
 
 const getInputParams = (): InputParams => {
@@ -43,37 +45,54 @@ const shouldDeployVersion = (versionChangeType: VersionType, maxDeployVersion: V
   return versionIndex <= maxVersionIndex;
 }
 
-const run = async (payload: WebhookPayloadCheckSuite): Promise<void> => {
+const run = async (payload: WebhookPayloadStatus): Promise<void> => {
   const input = getInputParams();
   const client = new GitHub(input.gitHubToken);
 
-  const isSuccess = payload.check_suite.conclusion === EXPECTED_CONCLUSION;
-  if (!isSuccess) {
-    console.log('Branch check suite run was not successful, skipping');
+  if (payload.context !== EXPECTED_CONTEXT) {
+    console.log('Context is not codeship, skipping');
     return;
   }
 
-  const pullRequest = payload.check_suite.pull_requests.find(e => e.head.ref.startsWith(DEPENDABOT_BRANCH_PREFIX));
-  if (!pullRequest) {
+  const isSuccess = payload.state === EXPECTED_CONCLUSION;
+  if (!isSuccess) {
+    console.log('status is not success, skipping');
+    return;
+  }
+
+  const branch = payload.branches.find(e => e.name.startsWith(DEPENDABOT_BRANCH_PREFIX));
+  if (!branch) {
     console.log('Branch for dependabot not found, skipping');
     return;
   }
 
-  const pullRequestData = await client.pulls.get({
-      owner: context.repo.owner,
-      pull_number: pullRequest.number,
-      repo: pullRequest.head.repo.name,
+  const pullRequests = await client.pulls.list({
+    head: `${context.repo.owner}:${branch}`,
+    direction: 'desc',
+    sort: 'updated',
+    per_page: 1,
+    repo: context.repo.repo,
+    owner: context.repo.owner,
   })
+  
+  if (!isSuccessStatusCode(pullRequests.status)) {
+    throw new Error('PRs could not be listed');
+  }
 
+  if (!pullRequests.data.length) {
+    throw new Error('No PR returned');
+  }
 
-  const versionChangeType = getVersionTypeChangeFromTitle(pullRequestData.data.title);
+  const pullRequest = pullRequests.data[0];
+
+  const versionChangeType = getVersionTypeChangeFromTitle(pullRequest.title);
 
   if (!shouldDeployVersion(versionChangeType, input.maxDeployVersion)) {
       console.log(`Skipping deploy for version type ${versionChangeType}. Running with maxDeployVersion ${input.maxDeployVersion}`);
       return;
    }
 
-   const labels = pullRequestData.data.labels.map(e => e.name);
+   const labels = pullRequest.labels.map(e => e.name);
    if (!shouldDeployLabel(labels)) {
      console.log(`Skipping deploy. PRs with Labels "${labels}" should not be deployed`);
      return;
@@ -84,8 +103,8 @@ const run = async (payload: WebhookPayloadCheckSuite): Promise<void> => {
 
 try {
   console.log(JSON.stringify(context));
-  if (context.eventName === 'check_suite') {
-    run(context.payload as WebhookPayloadCheckSuite);
+  if (context.eventName === 'status') {
+    run(context.payload as WebhookPayloadStatus);
   }
   else {
     console.log(`Not running for event ${context.eventName} and action ${context.action}`)

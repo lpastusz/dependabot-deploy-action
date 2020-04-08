@@ -3,7 +3,7 @@ import { GitHub } from "@actions/github";
 import { Context } from "@actions/github/lib/context";
 import { isSuccessStatusCode } from "./utils";
 
-const LABEL_NAME = 'in-progress';
+const LABEL_NAME = 'question';
 
 export const deploy = async (pullRequestNumber: number, context: Context, client: GitHub): Promise<void> => {
     const createReview = client.pulls.createReview({
