@@ -25341,17 +25341,17 @@ const run = (payload) => src_awaiter(void 0, void 0, void 0, function* () {
         head: `${github.context.repo.owner}:${branch}`,
         direction: 'desc',
         sort: 'updated',
-        per_page: 1,
+        state: 'open',
         repo: github.context.repo.repo,
         owner: github.context.repo.owner,
     });
     if (!isSuccessStatusCode(pullRequests.status)) {
         throw new Error('PRs could not be listed');
     }
-    if (!pullRequests.data.length) {
+    const pullRequest = pullRequests.data.find(e => e.head.sha === branch.commit.sha);
+    if (!pullRequest) {
         throw new Error('No PR returned');
     }
-    const pullRequest = pullRequests.data[0];
     const versionChangeType = getVersionTypeChangeFromTitle(pullRequest.title);
     if (!shouldDeployVersion(versionChangeType, input.maxDeployVersion)) {
         console.log(`Skipping deploy for version type ${versionChangeType}. Running with maxDeployVersion ${input.maxDeployVersion}`);
