@@ -12,8 +12,10 @@ The maximum difference in version which should be auto-deployed. Allowed values 
 
 ### `deployDevDependencies`
 
+TODO: So far ignored
 If true then dev dependencies will be deployed automatically. Default `true`.
 
 ### `deployDependencies`
 
+TODO: So far ignored
 If true then production dependencies will be deployed automatically. Default `false`.

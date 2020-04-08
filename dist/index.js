@@ -25289,6 +25289,7 @@ var src_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _argu
 
 
 const VERSION_TYPES = ['PATCH', 'MINOR', 'MAJOR'];
+const DEPENDABOT_BRANCH_PREFIX = 'dependabot-npm_and_yarn-';
 const getInputParams = () => {
     const deployDevDependencies = Boolean(Object(core.getInput)('deployDevDependencies'));
     const deployDependencies = Boolean(Object(core.getInput)('deployDependencies'));
@@ -25304,6 +25305,9 @@ const getInputParams = () => {
         maxDeployVersion,
     };
 };
+// const shouldDeployBranch = (): boolean => {
+//     payload
+// }
 const shouldDeployVersion = (versionChangeType, maxDeployVersion) => {
     const versionIndex = VERSION_TYPES.indexOf(versionChangeType);
     const maxVersionIndex = VERSION_TYPES.indexOf(maxDeployVersion);
@@ -25313,6 +25317,7 @@ const run = (payload) => src_awaiter(void 0, void 0, void 0, function* () {
     const input = getInputParams();
     const client = new github.GitHub(input.gitHubToken);
     const versionChangeType = getVersionTypeChangeFromTitle(payload.pull_request.title);
+    // payload.
     const shouldDeploy = shouldDeployVersion(versionChangeType, input.maxDeployVersion);
     if (!shouldDeploy) {
         console.log(`Skipping deploy for version type ${versionChangeType}. Running with maxDeployVersion ${input.maxDeployVersion}`);
@@ -25322,6 +25327,7 @@ const run = (payload) => src_awaiter(void 0, void 0, void 0, function* () {
 });
 try {
     if (github.context.eventName === 'pull_request') {
+        console.log(JSON.stringify(github.context));
         run(github.context.payload);
     }
     else {

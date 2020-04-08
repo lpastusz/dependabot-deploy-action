@@ -6,6 +6,7 @@ import { getVersionTypeChangeFromTitle } from './getVersionTypeChangeFromTitle';
 import { deploy } from './deploy';
 
 const VERSION_TYPES = ['PATCH', 'MINOR', 'MAJOR'];
+const DEPENDABOT_BRANCH_PREFIX = 'dependabot-npm_and_yarn-';
 
 const getInputParams = (): InputParams => {
   const deployDevDependencies = Boolean(core.getInput('deployDevDependencies'));
@@ -25,6 +26,10 @@ const getInputParams = (): InputParams => {
   };
 }
 
+// const shouldDeployBranch = (): boolean => {
+//     payload
+// }
+
 const shouldDeployVersion = (versionChangeType: VersionType, maxDeployVersion: VersionType): boolean => {
   const versionIndex = VERSION_TYPES.indexOf(versionChangeType);
   const maxVersionIndex = VERSION_TYPES.indexOf(maxDeployVersion);
@@ -37,6 +42,7 @@ const run = async (payload: WebhookPayloadPullRequest): Promise<void> => {
   const client = new GitHub(input.gitHubToken);
 
   const versionChangeType = getVersionTypeChangeFromTitle(payload.pull_request.title);
+  // payload.
 
   const shouldDeploy = shouldDeployVersion(versionChangeType, input.maxDeployVersion);
   if (!shouldDeploy) {
@@ -49,6 +55,7 @@ const run = async (payload: WebhookPayloadPullRequest): Promise<void> => {
 
 try {
   if (context.eventName === 'pull_request') {
+    console.log(JSON.stringify(context));
     run(context.payload as WebhookPayloadPullRequest);
   }
   else {
