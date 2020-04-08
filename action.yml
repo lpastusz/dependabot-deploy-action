@@ -1,0 +1,14 @@
+name: "Dependabot Deploy"
+description: "Automatically deploys PRs made by dependabot"
+inputs:
+  deployDevDependencies:
+    description: "If true then dev dependencies will be deployed automatically. Default `true`"
+    required: false
+    default: true
+  deployDependencies:
+    description: "If true then production dependencies will be deployed automatically, Default `false`"
+    required: false
+    default: false
+runs:
+  using: "node12"
+  main: "dist/index.js"
