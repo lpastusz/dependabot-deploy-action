@@ -4191,12 +4191,18 @@ const run = (payload) => __awaiter(undefined, void 0, void 0, function* () {
     const deployDevDependencies = Boolean(_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('deployDevDependencies'));
     const deployDependencies = Boolean(_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('deployDependencies'));
     const gitHubToken = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('gitHubToken');
-    const gitHub = new GitHub(gitHubToken);
-    const result = yield gitHub.pulls.createReview({
+    const client = new GitHub(gitHubToken);
+    yield client.pulls.createReview({
         event: 'APPROVE',
         pull_number: payload.pull_request.number,
-        owner: payload.repository.owner.login,
-        repo: payload.repository.name,
+        owner: context.repo.owner,
+        repo: context.repo.repo
+    });
+    const result = client.issues.addLabels({
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        issue_number: payload.pull_request.number,
+        labels: ['question'],
     });
     console.log(JSON.stringify(result, null, 2));
     console.log(deployDevDependencies, deployDependencies);
