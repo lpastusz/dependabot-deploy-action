@@ -7,31 +7,29 @@ export const getVersionTypeChangeFromTitle = (title: string): VersionType => {
       throw new Error(`Expected two versions in PR title "${title}"`);
     }
 
-    const [previousVersion, nextVersion] = versions;
+    const previous = versions[0].split('.').map(Number)
+    const next = versions[1].split('.').map(Number)
 
-    const parsedPrevious = previousVersion.split('.').map(Number)
-    const parsedNext = previousVersion.split('.').map(Number)
-
-    if (parsedPrevious.length !== 3) {
-      throw new Error(`Expected previous version to be in format X.X.X. Found "${previousVersion}"`);
+    if (previous.length !== 3) {
+      throw new Error(`Expected previous version to be in format X.X.X. Found "${versions[0]}"`);
     }
-    if (parsedNext.length !== 3) {
-      throw new Error(`Expected next version to be in format X.X.X. Found "${nextVersion}"`);
+    if (next.length !== 3) {
+      throw new Error(`Expected next version to be in format X.X.X. Found "${versions[1]}"`);
     }
 
-    if (previousVersion[0] >= nextVersion[0] && previousVersion[1] >= nextVersion[1] && previousVersion[2] >= nextVersion[2]) {
+    if (previous[0] >= next[0] && previous[1] >= next[1] && previous[2] >= next[2]) {
       throw new Error(`Expected previous version to be smaller in PR title "${title}"`);
     }
 
-    if (parsedNext[0] > parsedPrevious[0]) {
+    if (next[0] > previous[0]) {
       return 'MAJOR';
     }
 
-    if (parsedNext[1] > parsedPrevious[1]) {
+    if (next[1] > previous[1]) {
       return 'MINOR'
     }
 
-    if (parsedNext[2] > parsedPrevious[2]) {
+    if (next[2] > previous[2]) {
       return 'PATCH'
     }
 

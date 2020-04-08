@@ -25213,25 +25213,24 @@ const getVersionTypeChangeFromTitle = (title) => {
     if (versions.length !== 2) {
         throw new Error(`Expected two versions in PR title "${title}"`);
     }
-    const [previousVersion, nextVersion] = versions;
-    const parsedPrevious = previousVersion.split('.').map(Number);
-    const parsedNext = previousVersion.split('.').map(Number);
-    if (parsedPrevious.length !== 3) {
-        throw new Error(`Expected previous version to be in format X.X.X. Found "${previousVersion}"`);
+    const previous = versions[0].split('.').map(Number);
+    const next = versions[1].split('.').map(Number);
+    if (previous.length !== 3) {
+        throw new Error(`Expected previous version to be in format X.X.X. Found "${versions[0]}"`);
     }
-    if (parsedNext.length !== 3) {
-        throw new Error(`Expected next version to be in format X.X.X. Found "${nextVersion}"`);
+    if (next.length !== 3) {
+        throw new Error(`Expected next version to be in format X.X.X. Found "${versions[1]}"`);
     }
-    if (previousVersion[0] >= nextVersion[0] && previousVersion[1] >= nextVersion[1] && previousVersion[2] >= nextVersion[2]) {
+    if (previous[0] >= next[0] && previous[1] >= next[1] && previous[2] >= next[2]) {
         throw new Error(`Expected previous version to be smaller in PR title "${title}"`);
     }
-    if (parsedNext[0] > parsedPrevious[0]) {
+    if (next[0] > previous[0]) {
         return 'MAJOR';
     }
-    if (parsedNext[1] > parsedPrevious[1]) {
+    if (next[1] > previous[1]) {
         return 'MINOR';
     }
-    if (parsedNext[2] > parsedPrevious[2]) {
+    if (next[2] > previous[2]) {
         return 'PATCH';
     }
     throw new Error(`Unexpected case for title ${title}`);
@@ -25242,16 +25241,17 @@ const isSuccessStatusCode = (statusCode) => statusCode >= 200 && statusCode < 30
 
 // CONCATENATED MODULE: ./src/deploy.ts
 var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
 
 const LABEL_NAME = 'question';
-const deploy = (payload, context, client) => __awaiter(undefined, void 0, void 0, function* () {
+const deploy = (payload, context, client) => __awaiter(void 0, void 0, void 0, function* () {
     const createReview = client.pulls.createReview({
         event: 'APPROVE',
         pull_number: payload.pull_request.number,
@@ -25276,10 +25276,11 @@ const deploy = (payload, context, client) => __awaiter(undefined, void 0, void 0
 
 // CONCATENATED MODULE: ./src/index.ts
 var src_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -25308,7 +25309,7 @@ const shouldDeployVersion = (versionChangeType, maxDeployVersion) => {
     const maxVersionIndex = VERSION_TYPES.indexOf(maxDeployVersion);
     return versionIndex <= maxVersionIndex;
 };
-const run = (payload) => src_awaiter(undefined, void 0, void 0, function* () {
+const run = (payload) => src_awaiter(void 0, void 0, void 0, function* () {
     const input = getInputParams();
     const client = new github.GitHub(input.gitHubToken);
     const versionChangeType = getVersionTypeChangeFromTitle(payload.pull_request.title);
