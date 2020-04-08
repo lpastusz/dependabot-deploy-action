@@ -8,7 +8,7 @@ import { deploy } from './deploy';
 const VERSION_TYPES = ['PATCH', 'MINOR', 'MAJOR'];
 const DEPENDABOT_BRANCH_PREFIX = 'dependabot-npm_and_yarn-';
 const EXPECTED_CONCLUSION = 'success';
-const DEPENDABOT_LABEL = 'in-progress'
+const DEPENDABOT_LABEL = 'dependencies'
 
 const getInputParams = (): InputParams => {
   const deployDevDependencies = Boolean(core.getInput('deployDevDependencies'));
