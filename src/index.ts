@@ -19,7 +19,7 @@ const run = async (payload: Webhooks.WebhookPayloadPullRequest): Promise<void> =
       repo: context.repo.repo
     })
 
-    const result = client.issues.addLabels({
+    const result = await client.issues.addLabels({
       owner: context.repo.owner,
       repo: context.repo.repo,
       issue_number: payload.pull_request.number,
