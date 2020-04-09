@@ -25250,7 +25250,7 @@ var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _argume
     });
 };
 
-const LABEL_NAME = 'question';
+const LABEL_NAME = 'ready-for-deploy';
 const deploy = (pullRequestNumber, context, client) => __awaiter(void 0, void 0, void 0, function* () {
     const createReview = client.pulls.createReview({
         event: 'APPROVE',
