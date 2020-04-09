@@ -1,4 +1,3 @@
-import { WebhookPayloadCheckSuite } from "@octokit/webhooks";
 import { GitHub } from "@actions/github";
 import { Context } from "@actions/github/lib/context";
 import { isSuccessStatusCode } from "./utils";
